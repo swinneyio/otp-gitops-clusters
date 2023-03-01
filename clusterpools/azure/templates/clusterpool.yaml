@@ -1,0 +1,34 @@
+apiVersion: hive.openshift.io/v1
+kind: ClusterPool
+metadata:
+  name: '{{ .Values.clusterpoolName }}'
+  annotations:
+    argocd.argoproj.io/sync-wave: "420"
+    helm.sh/hook-weight: "420"
+  namespace: 'rhacm-clusterpools'
+  labels:
+    cloud: 'Azure'
+    region: '{{ .Values.provider.region }}'
+    vendor: OpenShift
+    {{- if .Values.clusterSet.enabled }}
+    cluster.open-cluster-management.io/clusterset: {{.Values.clusterSet.name}} 
+    {{- end}}
+spec:
+  size: {{ .Values.poolSize | default 0 }}
+  runningCount: 0
+  baseDomain: {{ .Values.provider.baseDomain }}
+  installConfigSecretTemplateRef:
+    name: {{ .Values.clusterpoolName }}-install-config 
+  imageSetRef:
+    name: img{{ .Values.imageName }}-x86-64-appsub
+  pullSecretRef:
+    name: {{ .Values.clusterpoolName }}-pull-secret
+  skipMachinePools: true # Disable MachinePool as using custom install-config
+  platform:
+    azure:
+      credentialsSecretRef:
+        name: {{ .Values.clusterpoolName }}-azure-creds
+      region: {{ .Values.provider.region }}
+      baseDomainResourceGroupName: {{ .Values.provider.resource_group }}
+
+  
